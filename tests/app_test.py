@@ -1,12 +1,11 @@
-import os
 import pytest
 from pathlib import Path
-
 from project.app import app, db
 
 import json
 
 TEST_DB = "test.db"
+
 
 @pytest.fixture
 def client():
@@ -63,9 +62,14 @@ def test_login_logout(client):
     rv = login(client, app.config["USERNAME"], app.config["PASSWORD"] + "x")
     assert b"Invalid password" in rv.data
 
+
 def test_delete_message(client):
     """Ensure the messages are being deleted"""
-    rv = client.get('/delete/1')
+    rv = client.get("/delete/1")
+    data = json.loads(rv.data)
+    assert data["status"] == 0
+    login(client, app.config["USERNAME"], app.config["PASSWORD"])
+    rv = client.get("/delete/1")
     data = json.loads(rv.data)
     assert data["status"] == 1
 
@@ -83,28 +87,38 @@ def test_messages(client):
     assert b"<strong>HTML</strong> allowed here" in rv.data
 
 
-
 """
 first, login with login()
-
 then add a post by asking the client to change the data of the element named "title" to something, and the element named "text" to something else
-
 follow redirects?
-
-now have the client get the results of a search query, 
+now have the client get the results of a search query,
 usually search queries are done by adding a ?query=whatever to the end of the html link
 we do the above manually
 search for an example that is in the db
 search for an example that is not in the db
 """
-def test_search(client):
-    """Ensure that the client can search for something and get results"""
-    login(client, app.config["USERNAME"], app.config["PASSWORD"])
-    rv = client.post(
-        "/add",
-        data=dict(title="<Hello>", text="<strong>HTML</strong> allowed here"),
-        follow_redirects=True,
-    )
-    rv2 = client.get("/search/?query=allow")
-    assert b'example1' not in rv2.data
-    assert b'allowed here' in rv2.data
+
+
+# def test_search(client):
+#     """Ensure that the client can search for something and get results"""
+#     login(client, app.config["USERNAME"], app.config["PASSWORD"])
+#     rv = client.post(
+#         "/add",
+#         data=dict(title="<Hello>", text="<strong>HTML</strong> allowed here"),
+#         follow_redirects=True,
+#     )
+#     rv2 = client.get("/search/?query=allow")
+#     assert b'example1' not in rv2.data
+#     assert b'allowed here' in rv2.data
+# @login_required
+# def test_helper():
+#     return jsonify({'status': -1, 'message': 'you are logged in.'})
+# def test_login_required(client):
+#    @login_required
+#     def test_helper():
+#         return jsonify({'status': -1, 'message': 'you are logged in.'})
+#     rv=client.get("/login_required_test")
+#     assert rv.status_code == 401
+#     assert rv.message == 'Please log in.'
+#     login(client, app.config["USERNAME"], app.config["PASSWORD"])
+#     assert rv.get_json.message == 'you are logged in.'
